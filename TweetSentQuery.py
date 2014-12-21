@@ -3,19 +3,23 @@ import pymongo
 import json
 import datetime as d
 import pprint
-try: 
-	connection = pymongo.Connection("mongodb://localhost", safe=True)
-	db=connection.twitter
-	twitter_stream = db.stream
-except pymongo.errors.ConnectionFailure:
-	print "There seems to be a problem connecting to the mongodb instance"
 
+def open_connection():
+	try: 
+		connection = pymongo.Connection("mongodb://localhost", safe=True)
+		db=connection.twitter
+		twitter_stream = db.stream
+		return twitter_stream
+	except pymongo.errors.ConnectionFailure:
+		print "There seems to be a problem connecting to the mongodb instance"
+
+def indexes(twitter_stream):
 #Make sure all proper indexes are present on the database
-twitter_stream.ensure_index("keyword")
-twitter_stream.ensure_index("timestamp_ms")
-twitter_stream.ensure_index([("year", pymongo.DESCENDING), ("month", pymongo.DESCENDING), ("day", pymongo.DESCENDING)])
-twitter_stream.ensure_index([("month", pymongo.DESCENDING), ("day", pymongo.DESCENDING)])
-twitter_stream.ensure_index([("day", pymongo.DESCENDING)])
+	twitter_stream.ensure_index("keyword")
+	twitter_stream.ensure_index("timestamp_ms")
+	twitter_stream.ensure_index([("year", pymongo.DESCENDING), ("month", pymongo.DESCENDING), ("day", pymongo.DESCENDING)])
+	twitter_stream.ensure_index([("month", pymongo.DESCENDING), ("day", pymongo.DESCENDING)])
+	twitter_stream.ensure_index([("day", pymongo.DESCENDING)])
 
 #create the group by criterion and the date filters based on the keyword, groupby arrays, start and end dates, 
 #and the boolean whether to include keyword in the group by ID
@@ -160,6 +164,8 @@ def num_tweets(db, start_date, end_date, groupby = [], keywords = [], ID_keyword
 
 if __name__ == '__main__':
 	#examples
+	twitter_stream = open_connection()
+	indexes(twitter_stream)
 	a = average_sentiment(db = twitter_stream, start_date = '1-2-2014',end_date = '12-25-2014', groupby = [], keywords = [], ID_keyword = False)
 	print pprint.pprint(a)
 	b = percent_sentiment(db = twitter_stream, start_date = '1-2-2014',end_date = '12-25-2014', groupby = [], keywords = [], ID_keyword = True)
